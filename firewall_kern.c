@@ -24,7 +24,7 @@ int xdp_firewall(struct xdp_md *ctx) {
     void *data = (void *)(long)ctx->data;
     void *data_end = (void *)(long)ctx->data_end;
 
-    strct ethhdr *eth = ptr_at(ctx, 0);
+    struct ethhdr *eth = ptr_at(ctx, 0);
 
     if (!eth) return XDP_PASS;
 
