@@ -29,6 +29,5 @@ This project is configured for **ARM64** systems.
 You need `clang`, `llvm`, `libbpf-dev`, `gcc`, `make`, and `bpftool` installed.
 
 ```bash
-# Example for Debian/Ubuntu-based systems
 sudo apt update
 sudo apt install clang llvm libbpf-dev gcc make bpftool
