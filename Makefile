@@ -18,4 +18,4 @@ $(USER_EXEC): $(USER_SRC) $(BPF_OBJ)
 	gcc $(USER_CFLAGS) $< -o $@ $(USER_LDFLAGS)
 
 clean:
-	rm -f $(BPF_OBJ) $(USER_EXEC) xdp_firewall.skel.h
+	rm -f $(BPF_OBJ) $(USER_EXEC) firewall_kern.skel.h
