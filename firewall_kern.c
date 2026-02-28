@@ -28,7 +28,7 @@ int xdp_firewall(struct xdp_md *ctx) {
 
     if (!eth) return XDP_PASS;
 
-    if (eth->h_proto != __constant_htons(ETH_P_IP)) return XDP_PASS
+    if (eth->h_proto != __constant_htons(ETH_P_IP)) return XDP_PASS;
 
     struct iphdr *ip = ptr_at(ctx, sizeof(*eth));
 

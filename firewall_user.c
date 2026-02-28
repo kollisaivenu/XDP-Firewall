@@ -15,6 +15,14 @@ static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va
     return vfprintf(stderr, format, args);
 }
 
+void cleanup_and_exit(struct xdp_firewall_bpf *skel, int status) {
+    if (skel) {
+        printf("\nDetaching XDP program and exiting...\n");
+        xdp_firewall_bpf__destroy(skel);
+    }
+    exit(status);
+}
+
 static volatile bool exiting = false;
 
 void sig_handler(int sig) {
@@ -46,6 +54,8 @@ int main(int argc, char **argv) {
     signal(SIGTERM, sig_handler);
 
     libbpf_set_print(libbpf_print_fn);
+
+    skel = xdp_firewall_bpf__open();
     if(!skel) {
         fprintf(stderr, "Failed to open BPF skeleton\n");
         return 1;
@@ -54,26 +64,26 @@ int main(int argc, char **argv) {
     err = xdp_firewall_bpf__load(skel);
     if(err) {
         fprintf(stderr, "Failed to load BPF program: %d\n", err);
-        goto cleanup;
+        cleanup_and_exit(skel, 1);;
     }
 
     int map_fd = bpf_map__fd(skel->maps.ip_blacklist);
     if (map_fd < 0) {
         fprintf(stderr, "Failed to get map file descriptor: %s\n", strerror(errno));
-        goto cleanup;
+        cleanup_and_exit(skel, 1);;
     }
 
     err = bpf_map_update_elem(map_fd, &map_key, &map_val, BPF_ANY);
     if (err) {
         fprintf(stderr, "Failed to update map (IP: %s): %s\n", ip_to_block, strerror(errno));
-        goto cleanup;
+        cleanup_and_exit(skel, 1);
     }
     printf("Successfully added IP %s to the blacklist map.\n", ip_to_block);
 
     err = xdp_program__attach(skel->progs.xdp_firewall, if_nametoindex(ifname), XDP_FLAGS_SKB_MODE, 0);
     if (err) {
         fprintf(stderr, "Failed to attach XDP program to interface %s: %s\n", ifname, strerror(-err));
-        goto cleanup;
+        cleanup_and_exit(skel, 1);
     }
     printf("Successfully attached XDP program to interface %s. Blocking traffic from %s.\n", ifname, ip_to_block);
     printf("Press Ctrl+C to detach and exit.\n");
@@ -82,11 +92,6 @@ int main(int argc, char **argv) {
         sleep(1);
     }
 
-cleanup:
-    if(skel) {
-        printf("\nDetaching XDP program and exiting...\n");
-        xdp_firewall_bpf__destroy(skel);
-    }
-
-    return err ?: 0;
+    cleanup_and_exit(skel, 0);
+    return 0;
 }
