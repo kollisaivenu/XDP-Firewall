@@ -10,29 +10,21 @@ struct {
     __type(value, __u32);
 } ip_blacklist SEC(".maps");
 
-static __always_inline void *ptr_at(const struct xdp_md *ctx, int offset) {
-    void *data_end = (void *)(long)ctx->data_end;
-    void *data = (void *)(long)ctx->data;
-
-    if(data + offset > data_end) return NULL;
-
-    return data + offset;
-}
-
 SEC("xdp")
 int xdp_firewall(struct xdp_md *ctx) {
     void *data = (void *)(long)ctx->data;
     void *data_end = (void *)(long)ctx->data_end;
 
-    struct ethhdr *eth = ptr_at(ctx, 0);
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end)
+        return XDP_PASS;
 
-    if (!eth) return XDP_PASS;
+    if (eth->h_proto != __constant_htons(ETH_P_IP))
+        return XDP_PASS;
 
-    if (eth->h_proto != __constant_htons(ETH_P_IP)) return XDP_PASS;
-
-    struct iphdr *ip = ptr_at(ctx, sizeof(*eth));
-
-    if (!ip) return XDP_PASS;
+    struct iphdr *ip = (void *)(eth + 1);
+    if ((void *)(ip + 1) > data_end)
+        return XDP_PASS;
 
     __u32 source_ip = ip->saddr;
     __u32 *is_blocked = bpf_map_lookup_elem(&ip_blacklist, &source_ip);
@@ -44,3 +36,4 @@ int xdp_firewall(struct xdp_md *ctx) {
 
     return XDP_PASS;
 }
+char LICENSE[] SEC("license") = "GPL";
