@@ -18,11 +18,11 @@ The firewall logic runs directly in the kernel's network driver path, dropping p
 | :--- | :--- | :--- |
 | `firewall_kern.c` | **Kernel Code** (eBPF) | Contains the XDP logic to check the packet's source IP against the blacklist map and return `XDP_DROP` if blocked. |
 | `firewall_user.c` | **Userspace Code** | Loads the eBPF program, attaches it to the interface, and inserts the target IP into the `ip_blacklist` map. |
-| `Makefile` | **Build Script** | Configured for **ARM64** architecture, handles compilation and skeleton generation (`firewall_kern.skel.h`). |
+| `Makefile` | **Build Script** | Configured for **x86** architecture, handles compilation and skeleton generation (`firewall_kern.skel.h`). |
 
 ## Building the Project (ARM64)
 
-This project is configured for **ARM64** systems.
+This project is configured for **x86** systems.
 
 ### Prerequisites
 
